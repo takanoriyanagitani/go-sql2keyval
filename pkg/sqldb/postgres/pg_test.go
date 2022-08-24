@@ -56,6 +56,29 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 				t.Errorf("Got: %s\n", tq)
 			}
 		})
+	})
 
+	t.Run("Set", func(t *testing.T) {
+		t.Run("'short' tablename", func(t *testing.T) {
+			qgen := newQueryGeneratorMust()
+			query, e := qgen.Set("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			if nil != e {
+				t.Errorf("Must accept 'short' tablename")
+			}
+			expected := `
+				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu(key, val)
+				VALUES ($1, $2)
+				ON CONFLICT ON CONSTRAINT t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu_pkc
+				DO UPDATE SET val=EXCLUDED.val
+				WHERE TARGET.val != EXCLUDED.val
+			`
+			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
+			te := strings.ReplaceAll(strings.TrimSpace(expected), "	", "")
+			if tq != te {
+				t.Errorf("Unexpected value.\n")
+				t.Errorf("Expected: %s\n", te)
+				t.Errorf("Got: %s\n", tq)
+			}
+		})
 	})
 }

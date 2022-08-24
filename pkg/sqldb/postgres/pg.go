@@ -43,7 +43,7 @@ func newQueryGeneratorMust() queryGenerator {
 	  {{end}}
 
 	  {{define "Set"}}
-	    INSERT INTO {{.tableName}}(key, val)
+		INSERT INTO {{.tableName}}(key, val)
 		VALUES ($1, $2)
 		ON CONFLICT ON CONSTRAINT {{.tableName}}_pkc
 		DO UPDATE SET val=EXCLUDED.val
