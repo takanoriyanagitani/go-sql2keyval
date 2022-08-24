@@ -47,6 +47,11 @@ func newQueryGeneratorMust() queryGenerator {
 		WHERE key=$1
 	  {{end}}
 
+	  {{define "Add"}}
+		INSERT INTO {{.tableName}}(key, val)
+		VALUES ($1, $2)
+	  {{end}}
+
 	  {{define "Set"}}
 		INSERT INTO {{.tableName}}(key, val)
 		VALUES ($1, $2)
