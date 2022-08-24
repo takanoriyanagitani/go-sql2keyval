@@ -59,6 +59,10 @@ func newQueryGeneratorMust() queryGenerator {
 		DO UPDATE SET val=EXCLUDED.val
 		WHERE TARGET.val != EXCLUDED.val
 	  {{end}}
+
+	  {{define "BDel"}}
+		DROP TABLE IF EXISTS {{.tableName}}
+	  {{end}}
 	`))
 	return queryGenerator{
 		tableChecker,
