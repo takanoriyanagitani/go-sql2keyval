@@ -42,6 +42,11 @@ func newQueryGeneratorMust() queryGenerator {
 		LIMIT 1
 	  {{end}}
 
+	  {{define "Del"}}
+		DELETE FROM {{.tableName}}
+		WHERE key=$1
+	  {{end}}
+
 	  {{define "Set"}}
 		INSERT INTO {{.tableName}}(key, val)
 		VALUES ($1, $2)
