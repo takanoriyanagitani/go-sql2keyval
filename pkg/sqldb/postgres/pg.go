@@ -95,5 +95,3 @@ func (q *queryGenerator) Add(bucket string) (query string, e error)  { return q.
 func (q *queryGenerator) Set(bucket string) (query string, e error)  { return q.generate(bucket, "Set") }
 func (q *queryGenerator) DelBucket(b string) (query string, e error) { return q.generate(b, "BDel") }
 func (q *queryGenerator) AddBucket(b string) (query string, e error) { return q.generate(b, "BAdd") }
-
-func (q *queryGenerator) AsInterface() s2k.QueryGenerator { return q }
