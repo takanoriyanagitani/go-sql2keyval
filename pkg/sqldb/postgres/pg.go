@@ -34,7 +34,11 @@ func newValidatorRegexpMust(pattern string) validator {
 }
 
 func newQueryGeneratorMust() queryGenerator {
-	tableChecker := newValidatorRegexpMust(`^[a-z][0-9a-z_]{0,62}$`)
+	// 0:     first char: [a-z]
+	// 1-58:  identifier
+	// 59-62: _pkc(reserved)
+	// 63:    null char(reserved)
+	tableChecker := newValidatorRegexpMust(`^[a-z][0-9a-z_]{0,58}$`)
 	tmpl := template.Must(template.New("root").Parse(`
 	  {{define "Get"}}
 		SELECT val FROM {{.tableName}}
@@ -53,11 +57,11 @@ func newQueryGeneratorMust() queryGenerator {
 	  {{end}}
 
 	  {{define "Set"}}
-		INSERT INTO {{.tableName}}(key, val)
+		INSERT INTO {{.tableName}} AS alias_insert (key, val)
 		VALUES ($1, $2)
 		ON CONFLICT ON CONSTRAINT {{.tableName}}_pkc
 		DO UPDATE SET val=EXCLUDED.val
-		WHERE TARGET.val != EXCLUDED.val
+		WHERE alias_insert.val != EXCLUDED.val
 	  {{end}}
 
 	  {{define "BDel"}}
@@ -66,8 +70,9 @@ func newQueryGeneratorMust() queryGenerator {
 
 	  {{define "BAdd"}}
 		CREATE TABLE IF NOT EXISTS {{.tableName}}(
-		  key BYTEA PRIMARY KEY,
-		  val BYTEA NOT NULL
+		  key BYTEA,
+		  val BYTEA NOT NULL,
+		  CONSTRAINT {{.tableName}}_pkc PRIMARY KEY(key)
 		)
 	  {{end}}
 	`))

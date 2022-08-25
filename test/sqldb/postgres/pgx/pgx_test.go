@@ -8,8 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	// use pgx driver to connect to postgres
 	_ "github.com/jackc/pgx/v4/stdlib"
 
+	// use postgres driver to generate sql
 	_ "github.com/takanoriyanagitani/go-sql2keyval/pkg/sqldb/postgres"
 
 	sk "github.com/takanoriyanagitani/go-sql2keyval"
@@ -75,7 +77,7 @@ func TestAll(t *testing.T) {
 	})
 
 	t.Run("Del/AddBucketFactory", func(t *testing.T) {
-		t.Parallel()
+		t.Parallel() // sub tests: non parallel
 
 		t.Run("add", func(t *testing.T) {
 			var newBucketAdder func(sk.Exec) sk.AddBucket = sk.AddBucketFactory("postgres")
@@ -88,7 +90,7 @@ func TestAll(t *testing.T) {
 				t.Errorf("Unable to get bucket creator")
 			}
 
-			tablename := "bucket_id_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
+			tablename := "bid_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
 			e := newBucket(context.Background(), tablename)
 			if nil != e {
 				t.Errorf("Unable to create bucket: %v", e)
@@ -126,7 +128,7 @@ func TestAll(t *testing.T) {
 				t.Errorf("Unable to get bucket remover")
 			}
 
-			tablename := "bucket_id_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
+			tablename := "bid_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
 			e := delBucket(context.Background(), tablename)
 			if nil != e {
 				t.Errorf("Unable to remove bucket: %v", e)
@@ -150,6 +152,48 @@ func TestAll(t *testing.T) {
 
 			if 0 != tcnt {
 				t.Errorf("Bucket found. tablecount: %v", tcnt)
+			}
+		})
+	})
+
+	t.Run("Set/Del", func(t *testing.T) {
+		t.Parallel()
+
+		var exec sk.Exec = ss.ExecNew(testDb)
+
+		var newBucketAdder func(sk.Exec) sk.AddBucket = sk.AddBucketFactory("postgres")
+		if nil == newBucketAdder {
+			t.Errorf("Unable to get add bucket factory")
+		}
+		var newBucket sk.AddBucket = newBucketAdder(exec)
+		if nil == newBucket {
+			t.Errorf("Unable to get bucket creator")
+		}
+
+		tablename := "testadd_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
+		e := newBucket(context.Background(), tablename)
+		if nil != e {
+			t.Errorf("Unable to create bucket: %v", e)
+		}
+
+		t.Run("set", func(t *testing.T){
+			t.Parallel()
+			var newSetter func(sk.Exec) sk.Set = sk.SetFactory("postgres")
+			if nil == newSetter {
+				t.Errorf("Unable to get setter factory")
+			}
+
+			var setter sk.Set = newSetter(exec)
+			if nil == setter {
+				t.Errorf("Unable to get setter")
+			}
+
+			key := []byte("14:18:07")
+			val := []byte("hw")
+
+			e := setter(context.Background(), tablename, key, val)
+			if nil != e {
+				t.Errorf("Unable to set key/value: %v", e)
 			}
 		})
 	})

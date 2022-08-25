@@ -45,12 +45,12 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.Get("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.Get("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				SELECT val FROM t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu
+				SELECT val FROM t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq
 				WHERE key=$1
 				LIMIT 1
 			`
@@ -69,14 +69,14 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.Set("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.Set("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu(key, val)
+				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq(key, val)
 				VALUES ($1, $2)
-				ON CONFLICT ON CONSTRAINT t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu_pkc
+				ON CONFLICT ON CONSTRAINT t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq_pkc
 				DO UPDATE SET val=EXCLUDED.val
 				WHERE TARGET.val != EXCLUDED.val
 			`
@@ -95,12 +95,12 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.Del("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.Del("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				DELETE FROM t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu
+				DELETE FROM t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq
 				WHERE key=$1
 			`
 			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
@@ -118,12 +118,12 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.Add("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.Add("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu(key, val)
+				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq(key, val)
 				VALUES ($1, $2)
 			`
 			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
@@ -141,12 +141,12 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.DelBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.DelBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				DROP TABLE IF EXISTS t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu
+				DROP TABLE IF EXISTS t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq
 			`
 			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
 			te := strings.ReplaceAll(strings.TrimSpace(expected), "	", "")
@@ -163,12 +163,12 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		t.Run("'short' tablename", func(t *testing.T) {
 		    t.Parallel()
 			qgen := newQueryGeneratorMust()
-			query, e := qgen.AddBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu")
+			query, e := qgen.AddBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				CREATE TABLE IF NOT EXISTS t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstu(
+				CREATE TABLE IF NOT EXISTS t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq(
 				  key BYTEA PRIMARY KEY,
 				  val BYTEA NOT NULL
 				)
