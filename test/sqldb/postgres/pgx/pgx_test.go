@@ -177,7 +177,7 @@ func TestAll(t *testing.T) {
 			t.Errorf("Unable to create bucket: %v", e)
 		}
 
-		t.Run("set", func(t *testing.T) {
+		t.Run("set(1st)", func(t *testing.T) {
 			var newSetter func(sk.Exec) sk.Set = sk.SetFactory("postgres")
 			if nil == newSetter {
 				t.Errorf("Unable to get setter factory")
@@ -194,6 +194,135 @@ func TestAll(t *testing.T) {
 			e := setter(context.Background(), tablename, key, val)
 			if nil != e {
 				t.Errorf("Unable to set key/value: %v", e)
+			}
+
+			row := rowGetter(
+				`
+					SELECT val FROM testadd_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25
+					WHERE key=$1
+			    `,
+				key,
+			)
+
+			var got_val []byte
+			e = row.Scan(&got_val)
+			if nil != e {
+				t.Errorf("Unable to get value: %v", e)
+			}
+
+			if 0 != bytes.Compare(got_val, val) {
+				t.Errorf("Unexpected value got.\n")
+			}
+		})
+
+		t.Run("set(2nd)", func(t *testing.T) {
+			var newSetter func(sk.Exec) sk.Set = sk.SetFactory("postgres")
+			if nil == newSetter {
+				t.Errorf("Unable to get setter factory")
+			}
+
+			var setter sk.Set = newSetter(exec)
+			if nil == setter {
+				t.Errorf("Unable to get setter")
+			}
+
+			key := []byte("14:18:07")
+			val := []byte("hh")
+
+			e := setter(context.Background(), tablename, key, val)
+			if nil != e {
+				t.Errorf("Unable to set key/value: %v", e)
+			}
+
+			row := rowGetter(
+				`
+					SELECT val FROM testadd_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25
+					WHERE key=$1
+			    `,
+				key,
+			)
+
+			var got_val []byte
+			e = row.Scan(&got_val)
+			if nil != e {
+				t.Errorf("Unable to get value: %v", e)
+			}
+
+			if 0 != bytes.Compare(got_val, val) {
+				t.Errorf("Unexpected value got.\n")
+			}
+		})
+
+		t.Run("add(before del)", func(t *testing.T) {
+			var newAdder func(sk.Exec) sk.Add = sk.AddFactory("postgres")
+			if nil == newAdder {
+				t.Errorf("Unable to get adder factory")
+			}
+
+			var adder sk.Add = newAdder(exec)
+			if nil == adder {
+				t.Errorf("Unable to get adder")
+			}
+
+			key := []byte("14:18:07")
+			val := []byte("hh")
+
+			e := adder(context.Background(), tablename, key, val)
+			if nil == e {
+				t.Errorf("Must be rejected(dup key)")
+			}
+		})
+
+		t.Run("del", func(t *testing.T) {
+			var newRemover func(sk.Exec) sk.Del = sk.DelFactory("postgres")
+			if nil == newRemover {
+				t.Errorf("Unable to get remover factory")
+			}
+
+			var remover sk.Del = newRemover(exec)
+			if nil == remover {
+				t.Errorf("Unable to get remover")
+			}
+
+			key := []byte("14:18:07")
+
+			e := remover(context.Background(), tablename, key)
+			if nil != e {
+				t.Errorf("Unable to remove key: %v", e)
+			}
+
+			row := rowGetter(
+				`
+					SELECT val FROM testadd_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25
+					WHERE key=$1
+			    `,
+				key,
+			)
+
+			var got_val []byte
+			e = row.Scan(&got_val)
+			if nil == e {
+				t.Errorf("Must be ErrNoRows")
+			}
+		})
+
+		t.Run("add(after del)", func(t *testing.T) {
+			var newAdder func(sk.Exec) sk.Add = sk.AddFactory("postgres")
+			if nil == newAdder {
+				t.Errorf("Unable to get adder factory")
+			}
+
+			var adder sk.Add = newAdder(exec)
+			if nil == adder {
+				t.Errorf("Unable to get adder")
+			}
+
+			key := []byte("14:18:07")
+			val := []byte("hh")
+
+			e := adder(context.Background(), tablename, key, val)
+			if nil != e {
+				t.Errorf("Unable to add key/value: %v", e)
 			}
 
 			row := rowGetter(
