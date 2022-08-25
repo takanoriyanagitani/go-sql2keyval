@@ -74,11 +74,11 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 				t.Errorf("Must accept 'short' tablename")
 			}
 			expected := `
-				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq(key, val)
+				INSERT INTO t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq AS alias_insert (key, val)
 				VALUES ($1, $2)
 				ON CONFLICT ON CONSTRAINT t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq_pkc
 				DO UPDATE SET val=EXCLUDED.val
-				WHERE TARGET.val != EXCLUDED.val
+				WHERE alias_insert.val != EXCLUDED.val
 			`
 			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
 			te := strings.ReplaceAll(strings.TrimSpace(expected), "	", "")
@@ -169,8 +169,9 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 			}
 			expected := `
 				CREATE TABLE IF NOT EXISTS t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq(
-				  key BYTEA PRIMARY KEY,
-				  val BYTEA NOT NULL
+				  key BYTEA,
+				  val BYTEA NOT NULL,
+				  CONSTRAINT t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq_pkc PRIMARY KEY(key)
 				)
 			`
 			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
