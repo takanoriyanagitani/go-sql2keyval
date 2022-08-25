@@ -16,7 +16,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		t.Parallel()
 		t.Run("empty bucket", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			_, e := qgen.Get("")
 			if nil == e {
@@ -25,7 +25,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		})
 
 		t.Run("first char is number", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			_, e := qgen.Get("0zero")
 			if nil == e {
@@ -34,7 +34,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		})
 
 		t.Run("too long tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			_, e := qgen.Get("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopqrstuv")
 			if nil == e {
@@ -43,7 +43,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		})
 
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.Get("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
@@ -67,7 +67,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("Set", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.Set("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
@@ -93,7 +93,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("Del", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.Del("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
@@ -116,7 +116,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("Add", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.Add("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
@@ -139,7 +139,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("BDel", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.DelBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
@@ -161,7 +161,7 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 	t.Run("BAdd", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {
-		    t.Parallel()
+			t.Parallel()
 			qgen := newQueryGeneratorMust()
 			query, e := qgen.AddBucket("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
 			if nil != e {
