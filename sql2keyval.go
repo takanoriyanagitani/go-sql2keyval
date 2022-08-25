@@ -14,7 +14,7 @@ type AddBucket func(ctx context.Context, bucket string) error
 
 func NonAtomicSetNew(del Del, add Add) Set {
 	return func(ctx context.Context, bucket string, key, val []byte) error {
-		del(ctx, bucket, key) // ignore missing key error
+		_ = del(ctx, bucket, key) // ignore missing key error
 		return add(ctx, bucket, key, val)
 	}
 }
