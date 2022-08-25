@@ -99,11 +99,11 @@ func TestAll(t *testing.T) {
 
 			var tableCount *sql.Row = rowGetter(
 				`
-		      SELECT COUNT(*) AS tcnt FROM pg_class
-		  	WHERE
-		  	  relname=$1
-		  	  AND relkind='r'
-		    `,
+					SELECT COUNT(*) AS tcnt FROM pg_class
+					WHERE
+					relname=$1
+					AND relkind='r'
+				`,
 				tablename,
 			)
 
