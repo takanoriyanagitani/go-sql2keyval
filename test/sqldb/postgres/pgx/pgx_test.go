@@ -1,6 +1,7 @@
 package pgx_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -157,7 +158,7 @@ func TestAll(t *testing.T) {
 	})
 
 	t.Run("Set/Del", func(t *testing.T) {
-		t.Parallel()
+		t.Parallel() // sub tests: non parallel
 
 		var exec sk.Exec = ss.ExecNew(testDb)
 
@@ -176,8 +177,7 @@ func TestAll(t *testing.T) {
 			t.Errorf("Unable to create bucket: %v", e)
 		}
 
-		t.Run("set", func(t *testing.T){
-			t.Parallel()
+		t.Run("set", func(t *testing.T) {
 			var newSetter func(sk.Exec) sk.Set = sk.SetFactory("postgres")
 			if nil == newSetter {
 				t.Errorf("Unable to get setter factory")
@@ -194,6 +194,24 @@ func TestAll(t *testing.T) {
 			e := setter(context.Background(), tablename, key, val)
 			if nil != e {
 				t.Errorf("Unable to set key/value: %v", e)
+			}
+
+			row := rowGetter(
+				`
+					SELECT val FROM testadd_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25
+					WHERE key=$1
+			    `,
+				key,
+			)
+
+			var got_val []byte
+			e = row.Scan(&got_val)
+			if nil != e {
+				t.Errorf("Unable to get value: %v", e)
+			}
+
+			if 0 != bytes.Compare(got_val, val) {
+				t.Errorf("Unexpected value got.\n")
 			}
 		})
 	})
