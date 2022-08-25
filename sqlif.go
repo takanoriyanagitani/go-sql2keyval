@@ -50,7 +50,7 @@ func (e *emptyQueryGenerator) DelBucket(_ string) (string, error) { return "", e
 func (e *emptyQueryGenerator) AddBucket(_ string) (string, error) { return "", e.err }
 
 func record2val(r Record) (v []byte, e error) {
-	e = r.Scan(v)
+	e = r.Scan(&v)
 	return
 }
 

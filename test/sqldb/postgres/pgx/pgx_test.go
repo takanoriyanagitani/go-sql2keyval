@@ -157,10 +157,11 @@ func TestAll(t *testing.T) {
 		})
 	})
 
-	t.Run("Set/Del", func(t *testing.T) {
+	t.Run("Set/Add/Del/Get", func(t *testing.T) {
 		t.Parallel() // sub tests: non parallel
 
 		var exec sk.Exec = ss.ExecNew(testDb)
+		var qry sk.Query = ss.QueryNew(testDb)
 
 		var newBucketAdder func(sk.Exec) sk.AddBucket = sk.AddBucketFactory("postgres")
 		if nil == newBucketAdder {
@@ -306,6 +307,25 @@ func TestAll(t *testing.T) {
 			}
 		})
 
+		t.Run("get(before add)", func(t *testing.T) {
+			var newGetter func(sk.Query) sk.Get = sk.GetFactory("postgres")
+			if nil == newGetter {
+				t.Errorf("Unable to get getter factory")
+			}
+
+			var getter sk.Get = newGetter(qry)
+			if nil == getter {
+				t.Errorf("Unable to get getter")
+			}
+
+			key := []byte("14:18:07")
+
+			_, e := getter(context.Background(), tablename, key)
+			if nil == e {
+				t.Errorf("Must be error")
+			}
+		})
+
 		t.Run("add(after del)", func(t *testing.T) {
 			var newAdder func(sk.Exec) sk.Add = sk.AddFactory("postgres")
 			if nil == newAdder {
@@ -341,6 +361,30 @@ func TestAll(t *testing.T) {
 
 			if 0 != bytes.Compare(got_val, val) {
 				t.Errorf("Unexpected value got.\n")
+			}
+		})
+
+		t.Run("get(after add)", func(t *testing.T) {
+			var newGetter func(sk.Query) sk.Get = sk.GetFactory("postgres")
+			if nil == newGetter {
+				t.Errorf("Unable to get getter factory")
+			}
+
+			var getter sk.Get = newGetter(qry)
+			if nil == getter {
+				t.Errorf("Unable to get getter")
+			}
+
+			key := []byte("14:18:07")
+			val := []byte("hh")
+
+			got, e := getter(context.Background(), tablename, key)
+			if nil != e {
+				t.Errorf("Unable to get: %v", e)
+			}
+
+			if 0 != bytes.Compare(got, val) {
+				t.Errorf("Unexpected value got.")
 			}
 		})
 	})
