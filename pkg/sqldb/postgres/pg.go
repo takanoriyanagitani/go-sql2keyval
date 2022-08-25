@@ -63,6 +63,13 @@ func newQueryGeneratorMust() queryGenerator {
 	  {{define "BDel"}}
 		DROP TABLE IF EXISTS {{.tableName}}
 	  {{end}}
+
+	  {{define "BAdd"}}
+		CREATE TABLE IF NOT EXISTS {{.tableName}}(
+		  key BYTEA PRIMARY KEY,
+		  val BYTEA NOT NULL
+		)
+	  {{end}}
 	`))
 	return queryGenerator{
 		tableChecker,
