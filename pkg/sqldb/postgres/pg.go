@@ -46,6 +46,11 @@ func newQueryGeneratorMust() queryGenerator {
 		LIMIT 1
 	  {{end}}
 
+	  {{define "Lst"}}
+		SELECT key FROM {{.tableName}}
+		ORDER BY key
+	  {{end}}
+
 	  {{define "Del"}}
 		DELETE FROM {{.tableName}}
 		WHERE key=$1
@@ -98,5 +103,6 @@ func (q *queryGenerator) Get(bucket string) (query string, e error)  { return q.
 func (q *queryGenerator) Del(bucket string) (query string, e error)  { return q.generate(bucket, "Del") }
 func (q *queryGenerator) Add(bucket string) (query string, e error)  { return q.generate(bucket, "Add") }
 func (q *queryGenerator) Set(bucket string) (query string, e error)  { return q.generate(bucket, "Set") }
+func (q *queryGenerator) Lst(bucket string) (query string, e error)  { return q.generate(bucket, "Lst") }
 func (q *queryGenerator) DelBucket(b string) (query string, e error) { return q.generate(b, "BDel") }
 func (q *queryGenerator) AddBucket(b string) (query string, e error) { return q.generate(b, "BAdd") }

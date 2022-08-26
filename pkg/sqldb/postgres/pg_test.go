@@ -64,6 +64,29 @@ func TestNewQueryGeneratorMust(t *testing.T) {
 		})
 	})
 
+	t.Run("Lst", func(t *testing.T) {
+		t.Parallel()
+		t.Run("'short' tablename", func(t *testing.T) {
+			t.Parallel()
+			qgen := newQueryGeneratorMust()
+			query, e := qgen.Lst("t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq")
+			if nil != e {
+				t.Errorf("Must accept 'short' tablename")
+			}
+			expected := `
+				SELECT key FROM t123456789abcdefghijklmnopqrstuv0123456789abcdefghijklmnopq
+				ORDER BY key
+			`
+			tq := strings.ReplaceAll(strings.TrimSpace(query), "	", "")
+			te := strings.ReplaceAll(strings.TrimSpace(expected), "	", "")
+			if tq != te {
+				t.Errorf("Unexpected value.\n")
+				t.Errorf("Expected: %s\n", te)
+				t.Errorf("Got: %s\n", tq)
+			}
+		})
+	})
+
 	t.Run("Set", func(t *testing.T) {
 		t.Parallel()
 		t.Run("'short' tablename", func(t *testing.T) {

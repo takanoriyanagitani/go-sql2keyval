@@ -69,6 +69,14 @@ func TestAll(t *testing.T) {
 		}
 	})
 
+	t.Run("QueryCbNew", func(t *testing.T) {
+		t.Parallel()
+		var q sk.QueryCb = ss.QueryCbNew(testDb)
+		if nil == q {
+			t.Errorf("Unable to get query interface")
+		}
+	})
+
 	t.Run("ExecNew", func(t *testing.T) {
 		t.Parallel()
 		var q sk.Exec = ss.ExecNew(testDb)
@@ -385,6 +393,87 @@ func TestAll(t *testing.T) {
 
 			if 0 != bytes.Compare(got, val) {
 				t.Errorf("Unexpected value got.")
+			}
+		})
+	})
+
+	t.Run("Set/Lst", func(t *testing.T) {
+		t.Parallel() // sub tests: non parallel
+
+		var exec sk.Exec = ss.ExecNew(testDb)
+		var qry sk.QueryCb = ss.QueryCbNew(testDb)
+
+		var newBucketAdder func(sk.Exec) sk.AddBucket = sk.AddBucketFactory("postgres")
+		if nil == newBucketAdder {
+			t.Errorf("Unable to get add bucket factory")
+		}
+		var newBucket sk.AddBucket = newBucketAdder(exec)
+		if nil == newBucket {
+			t.Errorf("Unable to get bucket creator")
+		}
+
+		tablename := "testlst_cafef00d_dead_beaf_face_864299792458_ymd_2022_08_25"
+		e := newBucket(context.Background(), tablename)
+		if nil != e {
+			t.Errorf("Unable to create bucket: %v", e)
+		}
+
+		pairs := []sk.Pair{
+			{Key: []byte("14:18:07"), Val: []byte("hw")},
+			{Key: []byte("14:18:08"), Val: []byte("hh")},
+		}
+
+		t.Run("set", func(t *testing.T) {
+			var newSetter func(sk.Exec) sk.Set = sk.SetFactory("postgres")
+			if nil == newSetter {
+				t.Errorf("Unable to get setter factory")
+			}
+
+			var setter sk.Set = newSetter(exec)
+			if nil == setter {
+				t.Errorf("Unable to get setter")
+			}
+
+			var setMany sk.SetMany = sk.NonAtomicSetsNew(setter)
+
+			e := setMany(context.Background(), tablename, pairs)
+
+			if nil != e {
+				t.Errorf("Unable to set key/value: %v", e)
+			}
+		})
+
+		t.Run("lst(after set)", func(t *testing.T) {
+			var newLister func(sk.QueryCb) sk.Lst = sk.LstFactory("postgres")
+			if nil == newLister {
+				t.Errorf("Unable to get list factory")
+			}
+
+			var lister sk.Lst = newLister(qry)
+			if nil == lister {
+				t.Errorf("Unable to get lister")
+			}
+
+			var keys [][]byte
+
+			e := lister(context.Background(), tablename, func(key []byte) error {
+				keys = append(keys, key)
+				return nil
+			})
+			if nil != e {
+				t.Errorf("Unable to get: %v", e)
+			}
+
+			if 2 != len(keys) {
+				t.Errorf("Unexpected number of keys: %v", len(keys))
+			}
+
+			if 0 != bytes.Compare(keys[0], pairs[0].Key) {
+				t.Errorf("Unexpected key")
+			}
+
+			if 0 != bytes.Compare(keys[1], pairs[1].Key) {
+				t.Errorf("Unexpected key")
 			}
 		})
 	})

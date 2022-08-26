@@ -31,11 +31,15 @@ type Record interface{ Scan(dest ...any) error }
 type Query func(ctx context.Context, query string, args ...any) Record
 type Exec func(ctx context.Context, query string, args ...any) error
 
+type RecordConsumer func(r Record) error
+type QueryCb func(ctx context.Context, cb RecordConsumer, query string, args ...any) error
+
 type QueryGenerator interface {
 	Get(bucket string) (query string, e error)
 	Del(bucket string) (query string, e error)
 	Add(bucket string) (query string, e error)
 	Set(bucket string) (query string, e error)
+	Lst(bucket string) (query string, e error)
 	DelBucket(bucket string) (query string, e error)
 	AddBucket(bucket string) (query string, e error)
 }
@@ -46,6 +50,7 @@ func (e *emptyQueryGenerator) Get(_ string) (string, error)       { return "", e
 func (e *emptyQueryGenerator) Del(_ string) (string, error)       { return "", e.err }
 func (e *emptyQueryGenerator) Add(_ string) (string, error)       { return "", e.err }
 func (e *emptyQueryGenerator) Set(_ string) (string, error)       { return "", e.err }
+func (e *emptyQueryGenerator) Lst(_ string) (string, error)       { return "", e.err }
 func (e *emptyQueryGenerator) DelBucket(_ string) (string, error) { return "", e.err }
 func (e *emptyQueryGenerator) AddBucket(_ string) (string, error) { return "", e.err }
 
@@ -62,6 +67,26 @@ func getterNew(g QueryGenerator, q Query) Get {
 		}
 		record := q(ctx, query, key)
 		return record2val(record)
+	}
+}
+
+func listNew(g QueryGenerator, q QueryCb) Lst {
+	return func(ctx context.Context, bucket string, cb func(key []byte) error) error {
+		query, e := g.Lst(bucket)
+		if nil != e {
+			return fmt.Errorf("Unable to get query for listing: %v", e)
+		}
+		return q(
+			ctx,
+			func(r Record) error {
+				v, e := record2val(r)
+				if nil != e {
+					return fmt.Errorf("Unable to get value as byte array: %v", e)
+				}
+				return cb(v)
+			},
+			query,
+		)
 	}
 }
 
@@ -131,6 +156,7 @@ func compose[T, U, V any](f func(T) U, g func(U) V) func(T) V {
 }
 
 var getFactory func(QueryGenerator) func(Query) Get = curry(getterNew)
+var lstFactory func(QueryGenerator) func(QueryCb) Lst = curry(listNew)
 var addFactory func(QueryGenerator) func(Exec) Add = curry(adderNew)
 var setFactory func(QueryGenerator) func(Exec) Set = curry(setterNew)
 var delFactory func(QueryGenerator) func(Exec) Del = curry(removerNew)
@@ -156,6 +182,7 @@ func getQueryGeneratorOrEmpty(driverName string) QueryGenerator {
 }
 
 var GetFactory func(driverName string) func(Query) Get = compose(getQueryGeneratorOrEmpty, getFactory)
+var LstFactory func(driverName string) func(QueryCb) Lst = compose(getQueryGeneratorOrEmpty, lstFactory)
 var AddFactory func(driverName string) func(Exec) Add = compose(getQueryGeneratorOrEmpty, addFactory)
 var SetFactory func(driverName string) func(Exec) Set = compose(getQueryGeneratorOrEmpty, setFactory)
 var DelFactory func(driverName string) func(Exec) Del = compose(getQueryGeneratorOrEmpty, delFactory)
