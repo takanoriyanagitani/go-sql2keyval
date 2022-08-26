@@ -19,6 +19,11 @@ func TestQueryNew(t *testing.T) {
 	QueryNew(nil)
 }
 
+func TestQueryCbNew(t *testing.T) {
+	t.Parallel()
+	QueryCbNew(nil)
+}
+
 func TestExecNew(t *testing.T) {
 	t.Parallel()
 	ExecNew(nil)

@@ -67,6 +67,17 @@ func TestGetFactory(t *testing.T) {
 	}
 }
 
+func TestLstFactory(t *testing.T) {
+	t.Parallel()
+
+	var dummyFactory func(QueryCb) Lst = LstFactory("does-not-exist")
+	var lister Lst = dummyFactory(nil)
+	e := lister(context.Background(), "", nil)
+	if nil == e {
+		t.Errorf("Must fail")
+	}
+}
+
 func TestAddFactory(t *testing.T) {
 	t.Parallel()
 
