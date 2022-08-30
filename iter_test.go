@@ -18,7 +18,7 @@ func TestAll(t *testing.T) {
 			if o.HasValue() {
 				t.Errorf("Must be empty")
 			}
-			if 0 != o.Value(){
+			if 0 != o.Value() {
 				t.Errorf("Unexpected value: %v", o.Value())
 			}
 		})
@@ -28,7 +28,7 @@ func TestAll(t *testing.T) {
 			i := IterFromArray[int]([]int{6, 3, 4})
 
 			o1 := i()
-			if ! o1.HasValue(){
+			if !o1.HasValue() {
 				t.Errorf("Must have a value")
 			}
 
@@ -58,8 +58,8 @@ func TestAll(t *testing.T) {
 	t.Run("IterFromOpt", func(t *testing.T) {
 		t.Parallel()
 
+		oi := IterFromOpt[string](OptionNew("hw"))
 		t.Run("1st", func(t *testing.T) {
-			oi := IterFromOpt[string](OptionNew("hw"))
 			o := oi()
 			if o.Empty() {
 				t.Errorf("Must have a value")
@@ -67,6 +67,13 @@ func TestAll(t *testing.T) {
 			v := o.Value()
 			if v != "hw" {
 				t.Errorf("Unexpected value: %s", v)
+			}
+		})
+
+		t.Run("2nd", func(t *testing.T) {
+			o := oi()
+			if o.HasValue() {
+				t.Errorf("Must be empty")
 			}
 		})
 	})
