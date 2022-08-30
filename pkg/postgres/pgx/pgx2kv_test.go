@@ -64,6 +64,26 @@ func TestAll(t *testing.T) {
 					t.Errorf("Must reject invalid key")
 				}
 			})
+
+			t.Run("valid key", func(t *testing.T) {
+				e := sm(context.Background(), tname, []s2k.Pair{
+					{Key: []byte("k"), Val: []byte("v")},
+				})
+				if nil != e {
+					t.Errorf("Unable to set valid key/val: %v", e)
+				}
+			})
+
+			t.Run("partial invalid key", func(t *testing.T) {
+				e := sm(context.Background(), tname, []s2k.Pair{
+					{Key: []byte("k"), Val: []byte("v")},
+					{Key: nil, Val: []byte("v")},
+					{Key: []byte("l"), Val: []byte("v")},
+				})
+				if nil == e {
+					t.Errorf("Must reject invalid key")
+				}
+			})
 		})
 	})
 
