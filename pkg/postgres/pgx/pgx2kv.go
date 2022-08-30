@@ -26,6 +26,19 @@ func pgxSetTranBuilderNew(qgen QueryGenerator) func(t pgx.Tx) s2k.Set {
 	}
 }
 
+func pgxBucketAddNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.AddBucket {
+	return func(p *pgxpool.Pool) s2k.AddBucket {
+		return func(ctx context.Context, bucket string) error {
+			q, e := qgen(bucket)
+			if nil != e {
+				return e
+			}
+			_, e = p.Exec(ctx, q)
+			return e
+		}
+	}
+}
+
 func pgxBulkSetBuilder(tx2setter func(pgx.Tx) s2k.Set) func(*pgxpool.Pool) s2k.SetMany {
 	return func(p *pgxpool.Pool) s2k.SetMany {
 		return func(ctx context.Context, bucket string, pairs []s2k.Pair) error {
@@ -104,4 +117,16 @@ var pgSetQueryGenerator QueryGenerator = queryGeneratorNew(
 	`),
 )
 
+var pgBulkAddQueryGenerator QueryGenerator = queryGeneratorNew(
+	pgTableValidator,
+	strQueryGeneratorNewMust(`
+		CREATE TABLE IF NOT EXISTS {{.tableName}} (
+		  key BYTEA,
+		  val BYTEA,
+		  CONSTRAINT {{.tableName}}_pkc PRIMARY KEY(key)
+		)
+	`),
+)
+
 var PgxBulkSetNew func(p *pgxpool.Pool) s2k.SetMany = pgxBulkSetNew(pgSetQueryGenerator)
+var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulkAddQueryGenerator)
