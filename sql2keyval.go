@@ -20,6 +20,9 @@ type Pair struct {
 
 type SetMany func(ctx context.Context, bucket string, pairs []Pair) error
 
+type Set2Bucket func(ctx context.Context, key, val []byte) error
+type SetMany2Bucket func(ctx context.Context, pairs []Pair) error
+
 func NonAtomicSetNew(del Del, add Add) Set {
 	return func(ctx context.Context, bucket string, key, val []byte) error {
 		_ = del(ctx, bucket, key) // ignore missing key error
@@ -31,6 +34,18 @@ func NonAtomicSetsNew(s Set) SetMany {
 	return func(ctx context.Context, bucket string, pairs []Pair) error {
 		for _, p := range pairs {
 			e := s(ctx, bucket, p.Key, p.Val)
+			if nil != e {
+				return e
+			}
+		}
+		return nil
+	}
+}
+
+func NonAtomicSetsSingleNew(s Set2Bucket) SetMany2Bucket {
+	return func(ctx context.Context, pairs []Pair) error {
+		for _, p := range pairs {
+			e := s(ctx, p.Key, p.Val)
 			if nil != e {
 				return e
 			}

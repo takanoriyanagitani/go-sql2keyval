@@ -1,10 +1,10 @@
 package pgx2kv
 
 import (
-	"testing"
-	"os"
 	"context"
 	"encoding/binary"
+	"os"
+	"testing"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
@@ -17,7 +17,7 @@ func BenchmarkSetMany(b *testing.B) {
 		b.Skip("skipping pgx test...")
 	}
 
-	p, e := pgxpool.Connect(context.Background(), "dbname=" + pgx_dbname)
+	p, e := pgxpool.Connect(context.Background(), "dbname="+pgx_dbname)
 	if nil != e {
 		b.Errorf("Unable to get pgx pool: %v", e)
 	}
@@ -32,10 +32,10 @@ func BenchmarkSetMany(b *testing.B) {
 		b.Errorf("Unable to create test table: %v", e)
 	}
 
-	b.Run("BenchmarkAll", func(b *testing.B){
-		b.Run("empty pair", func(b *testing.B){
+	b.Run("BenchmarkAll", func(b *testing.B) {
+		b.Run("empty pair", func(b *testing.B) {
 			b.ResetTimer()
-			b.RunParallel(func(pb *testing.PB){
+			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
 					e := sm(context.Background(), tname, nil)
 					if nil != e {
@@ -45,13 +45,13 @@ func BenchmarkSetMany(b *testing.B) {
 			})
 		})
 
-		b.Run("single pair", func(b *testing.B){
+		b.Run("single pair", func(b *testing.B) {
 			b.ResetTimer()
-			b.RunParallel(func(pb *testing.PB){
+			b.RunParallel(func(pb *testing.PB) {
 				var i uint64 = 0
 				buf8 := make([]byte, 8)
 				pairs := []s2k.Pair{
-					s2k.Pair{
+					{
 						Key: nil,
 						Val: nil,
 					},
@@ -70,7 +70,7 @@ func BenchmarkSetMany(b *testing.B) {
 		})
 	})
 
-	b.Cleanup(func(){
+	b.Cleanup(func() {
 		p.Close()
 	})
 }
