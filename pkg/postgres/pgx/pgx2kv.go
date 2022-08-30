@@ -96,6 +96,12 @@ var pgxBulkSetSingleNew func(query builtQuery) func(*pgxpool.Pool) s2k.SetMany2B
 type tableValidator func(tableName string) error
 type QueryGenerator func(bucketName string) (query string, e error)
 
+func bucket2queryNew(qgen QueryGenerator) func(bucketName string) builtQuery {
+	return func(bucketName string) builtQuery {
+		return qgen.build(bucketName)
+	}
+}
+
 func (q QueryGenerator) build(bucketName string) (b builtQuery) {
 	b.query, b.e = q(bucketName)
 	return
@@ -173,4 +179,7 @@ var pgBulkAddQueryGenerator QueryGenerator = queryGeneratorNew(
 var PgxBulkSetNew func(p *pgxpool.Pool) s2k.SetMany = pgxBulkSetNew(pgSetQueryGenerator)
 var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulkAddQueryGenerator)
 
-//var PgxBulkSetSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose()
+var PgxBulkSetSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose(
+	bucket2queryNew(pgUpsertGenerator),
+	pgxBulkSetSingleNew,
+)
