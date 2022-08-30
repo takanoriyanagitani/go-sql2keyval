@@ -3,6 +3,7 @@ package pgx2kv
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"os"
 	"testing"
 
@@ -108,6 +109,96 @@ func BenchmarkSetMany(b *testing.B) {
 					}
 				})
 			})
+		})
+
+		b.Run("single bucket, many iter key,value", func(b *testing.B) {
+			var sb s2k.Pairs2Bucket = PgxPairs2BucketSingleBuilder(tname)(p)
+			b.Run("empty pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sb(context.Background(), s2k.IterEmptyNew[s2k.Pair]())
+						if nil != e {
+							b.Errorf("Should be nop")
+						}
+					}
+				})
+			})
+
+			b.Run("single pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					var i uint64 = 0
+					buf8 := make([]byte, 8)
+					pair := s2k.Pair{
+						Key: nil,
+						Val: nil,
+					}
+					pi := 0
+					pairs := func() s2k.Option[s2k.Pair] {
+						if 0 == pi {
+							pi += 1
+							binary.LittleEndian.PutUint64(buf8, i)
+							pair.Key = buf8
+							return s2k.OptionNew(pair)
+						}
+						return s2k.OptionEmptyNew[s2k.Pair]()
+					}
+					for pb.Next() {
+						e := sb(context.Background(), pairs)
+						if nil != e {
+							b.Errorf("Unable to add key/val: %v", e)
+						}
+						i += 1
+						pi = 0
+						b.SetBytes(8)
+					}
+				})
+			})
+
+			scale2bench := func(scale int64) func(b *testing.B) {
+				return func(b *testing.B) {
+					b.ResetTimer()
+					b.RunParallel(func(pb *testing.PB) {
+						var i uint64 = 0
+						buf8 := make([]byte, 8)
+						pair := s2k.Pair{
+							Key: nil,
+							Val: nil,
+						}
+						var pi int64 = 0
+						pairs := func() s2k.Option[s2k.Pair] {
+							if pi < scale {
+								pi += 1
+								binary.LittleEndian.PutUint64(buf8, i)
+								pair.Key = buf8
+								return s2k.OptionNew(pair)
+							}
+							return s2k.OptionEmptyNew[s2k.Pair]()
+						}
+						for pb.Next() {
+							e := sb(context.Background(), pairs)
+							if nil != e {
+								b.Errorf("Unable to add key/val: %v", e)
+							}
+							i += 1
+							pi = 0
+							b.SetBytes(8 * scale)
+						}
+					})
+				}
+			}
+
+			scales := []int64{
+				16,
+				128,
+				1024,
+				16384,
+			}
+
+			for _, scale := range scales {
+				b.Run(fmt.Sprintf("%v pairs", scale), scale2bench(scale))
+			}
 		})
 	})
 
