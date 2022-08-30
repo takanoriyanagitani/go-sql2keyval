@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
@@ -156,7 +157,7 @@ func BenchmarkSetMany(b *testing.B) {
 				})
 			})
 
-			scale2bench := func(scale int64) func(b *testing.B) {
+			scale2bench := func(scale uint64) func(b *testing.B) {
 				return func(b *testing.B) {
 					b.ResetTimer()
 					b.RunParallel(func(pb *testing.PB) {
@@ -166,11 +167,11 @@ func BenchmarkSetMany(b *testing.B) {
 							Key: nil,
 							Val: nil,
 						}
-						var pi int64 = 0
+						var pi uint64 = 0
 						pairs := func() s2k.Option[s2k.Pair] {
 							if pi < scale {
 								pi += 1
-								binary.LittleEndian.PutUint64(buf8, i)
+								binary.LittleEndian.PutUint64(buf8, uint64(time.Now().UnixNano()))
 								pair.Key = buf8
 								return s2k.OptionNew(pair)
 							}
@@ -183,13 +184,18 @@ func BenchmarkSetMany(b *testing.B) {
 							}
 							i += 1
 							pi = 0
-							b.SetBytes(8 * scale)
+							b.SetBytes(int64(8 * scale))
 						}
 					})
+					b.ReportMetric(
+						float64(b.N)*float64(scale),
+						"inserts/op",
+					)
 				}
 			}
 
-			scales := []int64{
+			scales := []uint64{
+				1,
 				16,
 				128,
 				1024,
