@@ -6,3 +6,5 @@ func Bool2error(ok bool, egen func() error) error {
 	}
 	return egen()
 }
+
+func Compose[T, U, V any](f func(T) U, g func(U) V) func(T) V { return compose(f, g) }
