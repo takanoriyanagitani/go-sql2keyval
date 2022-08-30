@@ -18,13 +18,21 @@ func TestAll(t *testing.T) {
 			if o.HasValue() {
 				t.Errorf("Must be empty")
 			}
+			if 0 != o.Value(){
+				t.Errorf("Unexpected value: %v", o.Value())
+			}
 		})
 
 		t.Run("Multi", func(t *testing.T) {
 			t.Parallel()
 			i := IterFromArray[int]([]int{6, 3, 4})
 
-			i1 := i().Value()
+			o1 := i()
+			if ! o1.HasValue(){
+				t.Errorf("Must have a value")
+			}
+
+			i1 := o1.Value()
 			i2 := i().Value()
 			i3 := i().Value()
 			o := i()
