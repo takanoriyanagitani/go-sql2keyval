@@ -29,3 +29,14 @@ func TestBool2error(t *testing.T) {
 		}
 	})
 }
+
+func TestCompose(t *testing.T) {
+	t.Parallel()
+	var s2len func(string) int = func(s string) int { return len(s) }
+	var double func(i int) (doubled int) = func(i int) int { return 2 * i }
+	var doubleStringLen func(string) int = Compose(s2len, double)
+	doubledLen := doubleStringLen("0123456789abcdefghijk")
+	if 42 != doubledLen {
+		t.Errorf("Unexpected result: %v", doubledLen)
+	}
+}
