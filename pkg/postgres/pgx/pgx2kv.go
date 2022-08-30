@@ -73,6 +73,23 @@ func pgxSingleBulkSetBuilder(tx2setter func(pgx.Tx) s2k.Set2Bucket) func(*pgxpoo
 	}
 }
 
+func pgxPairs2BucketSingleBuilder(tx2setter func(pgx.Tx) s2k.Set2Bucket) func(*pgxpool.Pool) s2k.Pairs2Bucket {
+	return func(p *pgxpool.Pool) s2k.Pairs2Bucket {
+		return func(ctx context.Context, pairs s2k.Iter[s2k.Pair]) error {
+			c, err := p.Acquire(ctx)
+			if nil != err {
+				return err
+			}
+			defer c.Release()
+			return c.BeginFunc(ctx, func(tx pgx.Tx) error {
+				setter := tx2setter(tx)
+				sm := s2k.NonAtomicPairs2BucketNew(setter)
+				return sm(ctx, pairs)
+			})
+		}
+	}
+}
+
 func pgxBulkSetBuilder(tx2setter func(pgx.Tx) s2k.Set) func(*pgxpool.Pool) s2k.SetMany {
 	return func(p *pgxpool.Pool) s2k.SetMany {
 		return func(ctx context.Context, bucket string, pairs []s2k.Pair) error {
@@ -92,6 +109,7 @@ func pgxBulkSetBuilder(tx2setter func(pgx.Tx) s2k.Set) func(*pgxpool.Pool) s2k.S
 
 var pgxBulkSetNew func(qgen QueryGenerator) func(*pgxpool.Pool) s2k.SetMany = s2k.Compose(pgxSetTranBuilderNew, pgxBulkSetBuilder)
 var pgxBulkSetSingleNew func(query builtQuery) func(*pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose(pgxSetTranBuilderSingleNew, pgxSingleBulkSetBuilder)
+var pgxPairs2BucketSingleNew func(query builtQuery) func(*pgxpool.Pool) s2k.Pairs2Bucket = s2k.Compose(pgxSetTranBuilderSingleNew, pgxPairs2BucketSingleBuilder)
 
 type tableValidator func(tableName string) error
 type QueryGenerator func(bucketName string) (query string, e error)
@@ -182,4 +200,9 @@ var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulk
 var PgxBulkSetSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose(
 	bucket2queryNew(pgSetQueryGenerator),
 	pgxBulkSetSingleNew,
+)
+
+var PgxPairs2BucketSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.Pairs2Bucket = s2k.Compose(
+	bucket2queryNew(pgSetQueryGenerator),
+	pgxPairs2BucketSingleNew,
 )
