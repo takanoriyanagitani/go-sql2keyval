@@ -56,6 +56,19 @@ func pgxBucketAddNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.AddBucket {
 	}
 }
 
+func pgxBucketDelNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.DelBucket {
+	return func(p *pgxpool.Pool) s2k.DelBucket {
+		return func(ctx context.Context, bucket string) error {
+			q, e := qgen(bucket)
+			if nil != e {
+				return e
+			}
+			_, e = p.Exec(ctx, q)
+			return e
+		}
+	}
+}
+
 func poolExec(ctx context.Context, p *pgxpool.Pool, f func(pgx.Tx) error) error {
 	c, err := p.Acquire(ctx)
 	if nil != err {
@@ -189,8 +202,16 @@ var pgBulkAddQueryGenerator QueryGenerator = queryGeneratorNew(
 	`),
 )
 
+var pgBulkDelQueryGenerator QueryGenerator = queryGeneratorNew(
+	pgTableValidator,
+	strQueryGeneratorNewMust(`
+		DROP TABLE IF EXISTS {{.tableName}}
+	`),
+)
+
 var PgxBulkSetNew func(p *pgxpool.Pool) s2k.SetMany = pgxBulkSetNew(pgSetQueryGenerator)
 var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulkAddQueryGenerator)
+var PgxDelBucketNew func(p *pgxpool.Pool) s2k.DelBucket = pgxBucketDelNew(pgBulkDelQueryGenerator)
 
 var PgxBulkSetSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose(
 	bucket2queryNew(pgSetQueryGenerator),

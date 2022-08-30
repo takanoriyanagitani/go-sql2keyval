@@ -24,10 +24,16 @@ func BenchmarkSetMany(b *testing.B) {
 		b.Errorf("Unable to get pgx pool: %v", e)
 	}
 
+	var dt s2k.DelBucket = PgxDelBucketNew(p)
 	var ab s2k.AddBucket = PgxAddBucketNew(p)
 	var sm s2k.SetMany = PgxBulkSetNew(p)
 
 	tname := "benchmark_setmany"
+
+	e = dt(context.Background(), tname)
+	if nil != e {
+		b.Errorf("Unable to drop test table: %v", e)
+	}
 
 	e = ab(context.Background(), tname)
 	if nil != e {
@@ -189,7 +195,7 @@ func BenchmarkSetMany(b *testing.B) {
 					})
 					b.ReportMetric(
 						float64(b.N)*float64(scale),
-						"inserts/op",
+						"inserts",
 					)
 				}
 			}
