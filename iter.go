@@ -41,3 +41,14 @@ func IterFromChan[T any](c <-chan T) Iter[T] {
 		return OptionEmptyNew[T]()
 	}
 }
+
+func IterFromChanNB[T any](c <-chan T) Iter[T] {
+	return func() Option[T] {
+		select {
+		case t := <-c:
+			return OptionNew(t)
+		default:
+			return OptionEmptyNew[T]()
+		}
+	}
+}
