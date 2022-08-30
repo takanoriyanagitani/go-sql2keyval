@@ -131,6 +131,58 @@ func TestAll(t *testing.T) {
 		})
 	})
 
+	t.Run("PgxDelBucketNew", func(t *testing.T) {
+		t.Parallel()
+		var ab s2k.AddBucket = PgxAddBucketNew(p)
+		var db s2k.DelBucket = PgxDelBucketNew(p)
+
+		t.Run("invalid table name", func(t *testing.T) {
+			t.Parallel()
+			e := ab(context.Background(), "0table")
+			if nil == e {
+				t.Errorf("Must reject invalid table name")
+			}
+		})
+
+		// non parallel
+		t.Run("ordered", func(t *testing.T) {
+			tname := "test_delbucket_new_pgx"
+			t.Run("add table", func(t *testing.T) {
+				e := ab(context.Background(), tname)
+				if nil != e {
+					t.Errorf("Unable to create table: %v", e)
+				}
+			})
+
+			t.Run("del table", func(t *testing.T) {
+				e := db(context.Background(), tname)
+				if nil != e {
+					t.Errorf("Unable to drop table: %v", e)
+				}
+			})
+
+			t.Run("check table", func(t *testing.T) {
+				row := p.QueryRow(context.Background(), `
+					SELECT COUNT(*) AS cnt FROM pg_class
+					WHERE
+					  relname = $1::TEXT
+					AND relkind = 'r'
+			    `, tname)
+
+				var cnt int64
+				e := row.Scan(&cnt)
+				if nil != e {
+					t.Errorf("Unable to get table name: %v", e)
+				}
+
+				if 0 != cnt {
+					t.Errorf("Unexpected number of tables: %v", cnt)
+				}
+			})
+
+		})
+	})
+
 	t.Run("PgxBulkSetSingleBuilder", func(t *testing.T) {
 		t.Parallel()
 
