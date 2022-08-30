@@ -7,10 +7,27 @@ func IterFromArray[T any](a []T) Iter[T] {
 	i := 0
 	return func() Option[T] {
 		if i < l {
-			o := optionNew(a[i])
+			o := OptionNew(a[i])
 			i += 1
 			return o
 		}
-		return optionEmptyNew[T]()
+		return OptionEmptyNew[T]()
+	}
+}
+
+func IterEmptyNew[T any]() Iter[T] {
+	return func() Option[T]{
+		return OptionEmptyNew[T]()
+	}
+}
+
+func IterFromOpt[T any](o Option[T]) Iter[T]{
+	i := 0
+	return func() Option[T]{
+		if 0 == i {
+			i += 1
+			return o
+		}
+		return OptionEmptyNew[T]()
 	}
 }
