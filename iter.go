@@ -16,14 +16,14 @@ func IterFromArray[T any](a []T) Iter[T] {
 }
 
 func IterEmptyNew[T any]() Iter[T] {
-	return func() Option[T]{
+	return func() Option[T] {
 		return OptionEmptyNew[T]()
 	}
 }
 
-func IterFromOpt[T any](o Option[T]) Iter[T]{
+func IterFromOpt[T any](o Option[T]) Iter[T] {
 	i := 0
-	return func() Option[T]{
+	return func() Option[T] {
 		if 0 == i {
 			i += 1
 			return o
