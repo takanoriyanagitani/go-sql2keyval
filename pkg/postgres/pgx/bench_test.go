@@ -33,39 +33,80 @@ func BenchmarkSetMany(b *testing.B) {
 	}
 
 	b.Run("BenchmarkAll", func(b *testing.B) {
-		b.Run("empty pair", func(b *testing.B) {
-			b.ResetTimer()
-			b.RunParallel(func(pb *testing.PB) {
-				for pb.Next() {
-					e := sm(context.Background(), tname, nil)
-					if nil != e {
-						b.Errorf("Should be nop")
+		b.Run("many bucket, many key/value", func(b *testing.B) {
+			b.Run("empty pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sm(context.Background(), tname, nil)
+						if nil != e {
+							b.Errorf("Should be nop")
+						}
 					}
-				}
+				})
+			})
+
+			b.Run("single pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					var i uint64 = 0
+					buf8 := make([]byte, 8)
+					pairs := []s2k.Pair{
+						{
+							Key: nil,
+							Val: nil,
+						},
+					}
+					for pb.Next() {
+						binary.LittleEndian.PutUint64(buf8, i)
+						pairs[0].Key = buf8
+						e := sm(context.Background(), tname, pairs)
+						if nil != e {
+							b.Errorf("Unable to add key/val: %v", e)
+						}
+						i += 1
+						b.SetBytes(8)
+					}
+				})
 			})
 		})
 
-		b.Run("single pair", func(b *testing.B) {
-			b.ResetTimer()
-			b.RunParallel(func(pb *testing.PB) {
-				var i uint64 = 0
-				buf8 := make([]byte, 8)
-				pairs := []s2k.Pair{
-					{
-						Key: nil,
-						Val: nil,
-					},
-				}
-				for pb.Next() {
-					binary.LittleEndian.PutUint64(buf8, i)
-					pairs[0].Key = buf8
-					e := sm(context.Background(), tname, pairs)
-					if nil != e {
-						b.Errorf("Unable to add key/val: %v", e)
+		b.Run("single bucket, many key/value", func(b *testing.B) {
+			var sb s2k.SetMany2Bucket = PgxBulkSetSingleBuilder(tname)(p)
+			b.Run("empty pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sb(context.Background(), nil)
+						if nil != e {
+							b.Errorf("Should be nop")
+						}
 					}
-					i += 1
-					b.SetBytes(8)
-				}
+				})
+			})
+
+			b.Run("single pair", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					var i uint64 = 0
+					buf8 := make([]byte, 8)
+					pairs := []s2k.Pair{
+						{
+							Key: nil,
+							Val: nil,
+						},
+					}
+					for pb.Next() {
+						binary.LittleEndian.PutUint64(buf8, i)
+						pairs[0].Key = buf8
+						e := sb(context.Background(), pairs)
+						if nil != e {
+							b.Errorf("Unable to add key/val: %v", e)
+						}
+						i += 1
+						b.SetBytes(8)
+					}
+				})
 			})
 		})
 	})
