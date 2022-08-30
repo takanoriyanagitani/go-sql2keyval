@@ -31,3 +31,13 @@ func IterFromOpt[T any](o Option[T]) Iter[T] {
 		return OptionEmptyNew[T]()
 	}
 }
+
+func IterFromChan[T any](c <-chan T) Iter[T] {
+	return func() Option[T] {
+		t, ok := <-c
+		if ok {
+			return OptionNew(t)
+		}
+		return OptionEmptyNew[T]()
+	}
+}

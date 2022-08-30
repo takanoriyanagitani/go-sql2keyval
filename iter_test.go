@@ -78,4 +78,33 @@ func TestAll(t *testing.T) {
 		})
 	})
 
+	t.Run("IterFromChan", func(t *testing.T) {
+		t.Parallel()
+
+		c := make(chan int, 2)
+		var i Iter[int] = IterFromChan(c)
+
+		go func() {
+			c <- 634
+			c <- 333
+			c <- 42
+			close(c)
+		}()
+
+		checker := func(got, expected int) {
+			if got != expected {
+				t.Errorf("Unexpected value got: %v", got)
+			}
+		}
+
+		checker(i().Value(), 634)
+		checker(i().Value(), 333)
+		checker(i().Value(), 42)
+
+		o := i()
+		if o.HasValue() {
+			t.Errorf("Must be empty")
+		}
+	})
+
 }
