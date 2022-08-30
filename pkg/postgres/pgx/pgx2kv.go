@@ -180,6 +180,6 @@ var PgxBulkSetNew func(p *pgxpool.Pool) s2k.SetMany = pgxBulkSetNew(pgSetQueryGe
 var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulkAddQueryGenerator)
 
 var PgxBulkSetSingleBuilder func(bucketName string) func(p *pgxpool.Pool) s2k.SetMany2Bucket = s2k.Compose(
-	bucket2queryNew(pgUpsertGenerator),
+	bucket2queryNew(pgSetQueryGenerator),
 	pgxBulkSetSingleNew,
 )
