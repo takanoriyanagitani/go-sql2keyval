@@ -48,10 +48,20 @@ func TestAll(t *testing.T) {
 
 		// non parallel
 		t.Run("ordered", func(t *testing.T) {
+			tname := "test_bulkset"
 			t.Run("add bucket", func(t *testing.T) {
-				e := ab(context.Background(), "test_bulkset")
+				e := ab(context.Background(), tname)
 				if nil != e {
 					t.Errorf("Unable to create table: %v", e)
+				}
+			})
+
+			t.Run("invalid key", func(t *testing.T) {
+				e := sm(context.Background(), tname, []s2k.Pair{
+					{Key: nil, Val: []byte("v")},
+				})
+				if nil == e {
+					t.Errorf("Must reject invalid key")
 				}
 			})
 		})
