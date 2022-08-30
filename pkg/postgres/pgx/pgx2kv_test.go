@@ -131,6 +131,72 @@ func TestAll(t *testing.T) {
 		})
 	})
 
+	t.Run("PgxBulkSetSingleBuilder", func(t *testing.T) {
+		t.Parallel()
+
+		tname := "test_upserts2single"
+		var sm s2k.SetMany2Bucket = PgxBulkSetSingleBuilder(tname)(p)
+		var ab s2k.AddBucket = PgxAddBucketNew(p)
+
+		t.Run("empty", func(t *testing.T) {
+			t.Parallel()
+			e := sm(context.Background(), nil)
+			if nil != e {
+				t.Errorf("Should be nop: %v", e)
+			}
+		})
+
+		t.Run("invalid table name", func(t *testing.T) {
+			t.Parallel()
+			var smInvalid s2k.SetMany2Bucket = PgxBulkSetSingleBuilder("0invl")(p)
+			e := smInvalid(context.Background(), []s2k.Pair{
+				{Key: []byte("k"), Val: []byte("v")},
+			})
+			if nil == e {
+				t.Errorf("Must reject invalid table name")
+			}
+		})
+
+		// non parallel
+		t.Run("ordered", func(t *testing.T) {
+			t.Run("add bucket", func(t *testing.T) {
+				e := ab(context.Background(), tname)
+				if nil != e {
+					t.Errorf("Unable to create table: %v", e)
+				}
+			})
+
+			t.Run("invalid key", func(t *testing.T) {
+				e := sm(context.Background(), []s2k.Pair{
+					{Key: nil, Val: []byte("v")},
+				})
+				if nil == e {
+					t.Errorf("Must reject invalid key")
+				}
+			})
+
+			t.Run("valid key", func(t *testing.T) {
+				e := sm(context.Background(), []s2k.Pair{
+					{Key: []byte("k"), Val: []byte("v")},
+				})
+				if nil != e {
+					t.Errorf("Unable to set valid key/val: %v", e)
+				}
+			})
+
+			t.Run("partial invalid key", func(t *testing.T) {
+				e := sm(context.Background(), []s2k.Pair{
+					{Key: []byte("k"), Val: []byte("v")},
+					{Key: nil, Val: []byte("v")},
+					{Key: []byte("l"), Val: []byte("v")},
+				})
+				if nil == e {
+					t.Errorf("Must reject invalid key")
+				}
+			})
+		})
+	})
+
 	t.Cleanup(func() {
 		p.Close()
 	})
