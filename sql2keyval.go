@@ -19,18 +19,19 @@ type Pair struct {
 }
 
 type Batch struct {
-    bucket string
-    pair Pair
+	bucket string
+	pair   Pair
 }
+
 func (b Batch) Bucket() string { return b.bucket }
-func (b Batch) Pair() Pair { return b.pair }
+func (b Batch) Pair() Pair     { return b.pair }
 
 func BatchNew(bucket string, Key, Val []byte) Batch {
-    pair := Pair{Key, Val}
-    return Batch{
-        bucket,
-        pair,
-    }
+	pair := Pair{Key, Val}
+	return Batch{
+		bucket,
+		pair,
+	}
 }
 
 type SetMany func(ctx context.Context, bucket string, pairs []Pair) error
@@ -52,19 +53,6 @@ func NonAtomicSetsNew(s Set) SetMany {
 	return func(ctx context.Context, bucket string, pairs []Pair) error {
 		for _, p := range pairs {
 			e := s(ctx, bucket, p.Key, p.Val)
-			if nil != e {
-				return e
-			}
-		}
-		return nil
-	}
-}
-
-func NonAtomicSetsBatchNew(s Set) SetBatch {
-	return func(ctx context.Context, many Iter[Batch]) error {
-		for o := many(); o.HasValue(); o = many() {
-            var b Batch = o.Value()
-			e := s(ctx, b.bucket, b.pair.Key, b.pair.Val)
 			if nil != e {
 				return e
 			}

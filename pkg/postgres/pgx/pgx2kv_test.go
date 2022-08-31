@@ -129,7 +129,7 @@ func TestAll(t *testing.T) {
 				}
 			})
 
-			t.Run("upserts", func(t *testing.T) {
+			t.Run("valid upserts", func(t *testing.T) {
 				e := sm(context.Background(), s2k.IterFromArray([]s2k.Batch{
 					s2k.BatchNew(tname+"_1", []byte("k"), []byte("v")),
 					s2k.BatchNew(tname+"_2", []byte("k"), []byte("v")),
@@ -137,6 +137,17 @@ func TestAll(t *testing.T) {
 				}))
 				if nil != e {
 					t.Errorf("Unable to upsert: %v", e)
+				}
+			})
+
+			t.Run("partial invalid upserts", func(t *testing.T) {
+				e := sm(context.Background(), s2k.IterFromArray([]s2k.Batch{
+					s2k.BatchNew(tname+"_1", []byte("k"), []byte("v")),
+					s2k.BatchNew(tname+"_2", nil, []byte("v")),
+					s2k.BatchNew(tname+"_3", []byte("k"), []byte("v")),
+				}))
+				if nil == e {
+					t.Errorf("Must fail")
 				}
 			})
 		})
@@ -193,7 +204,7 @@ func TestAll(t *testing.T) {
 
 		t.Run("invalid table name", func(t *testing.T) {
 			t.Parallel()
-			e := ab(context.Background(), "0table")
+			e := db(context.Background(), "0table")
 			if nil == e {
 				t.Errorf("Must reject invalid table name")
 			}

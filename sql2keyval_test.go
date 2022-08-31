@@ -140,4 +140,33 @@ func TestSql2KeyVal(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("BatchNew", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("empty", func(t *testing.T) {
+			t.Parallel()
+
+			var b Batch = BatchNew("", nil, nil)
+
+			t.Run("bucket", func(t *testing.T) {
+				if "" != b.Bucket() {
+					t.Errorf("Unexpected value: %s", b.Bucket())
+				}
+			})
+
+			t.Run("key", func(t *testing.T) {
+				if nil != b.Pair().Key {
+					t.Errorf("Unexpected key got.")
+				}
+			})
+
+			t.Run("val", func(t *testing.T) {
+				if nil != b.Pair().Val {
+					t.Errorf("Unexpected val got.")
+				}
+			})
+
+		})
+	})
 }
