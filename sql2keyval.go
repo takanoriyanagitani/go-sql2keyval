@@ -18,6 +18,11 @@ type Pair struct {
 	Val []byte
 }
 
+func (p Pair) WithKey(Key []byte) Pair {
+	Val := p.Val
+	return Pair{Key, Val}
+}
+
 type Batch struct {
 	bucket string
 	pair   Pair
@@ -25,6 +30,10 @@ type Batch struct {
 
 func (b Batch) Bucket() string { return b.bucket }
 func (b Batch) Pair() Pair     { return b.pair }
+func (b Batch) WithKey(k []byte) Batch {
+	p := b.Pair().WithKey(k)
+	return BatchNew(b.Bucket(), p.Key, p.Val)
+}
 
 func BatchNew(bucket string, Key, Val []byte) Batch {
 	pair := Pair{Key, Val}

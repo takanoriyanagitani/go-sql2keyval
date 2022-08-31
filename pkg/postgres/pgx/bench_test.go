@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	"math/rand"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
@@ -38,6 +39,48 @@ func BenchmarkSetMany(b *testing.B) {
 	e = ab(context.Background(), tname)
 	if nil != e {
 		b.Errorf("Unable to create test table: %v", e)
+	}
+
+	tnames := []string{
+		"test_batch1",
+		"test_batch2",
+		"test_batch3",
+		"test_dates",
+		"test_devices",
+		"test_devices_2022_08_31",
+		"test_dates_cafef00ddeadbeafface864299792458",
+		"test_data_2022_08_31_cafef00ddeadbeafface864299792458",
+	}
+
+	var integers s2k.Iter[int] = s2k.IterInts(0, 256)
+	var pnames s2k.Iter[string] = s2k.IterMap(integers, func(i int) string {
+		return fmt.Sprintf("c%03df00ddeadbeafface864299792458", i)
+	})
+
+	var randVal []byte = make([]byte, 16384)
+	_, e = rand.Read(randVal)
+	if nil != e {
+		b.Errorf("Unable to initialize random val: %v", e)
+	}
+
+	var ibmany s2k.Iter[s2k.Batch] = s2k.IterMap(pnames, func(tname string) s2k.Batch {
+		return s2k.BatchNew(tname, []byte("key"), randVal)
+	})
+
+	bmany := ibmany.ToArray()
+
+	for _, tn := range tnames {
+		e := ab(context.Background(), tn)
+		if nil != e {
+			b.Errorf("Unable to create table: %v", e)
+		}
+	}
+
+	for _, ba := range bmany {
+		e := ab(context.Background(), ba.Bucket())
+		if nil != e {
+			b.Errorf("Unable to create table: %v", e)
+		}
 	}
 
 	b.Run("BenchmarkAll", func(b *testing.B) {
@@ -211,6 +254,75 @@ func BenchmarkSetMany(b *testing.B) {
 			for _, scale := range scales {
 				b.Run(fmt.Sprintf("%v pairs", scale), scale2bench(scale))
 			}
+		})
+
+		b.Run("many batch", func(b *testing.B) {
+			var sb s2k.SetBatch = PgxBatchUpsertNew(p)
+
+			b.Run("empty batch", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sb(context.Background(), s2k.IterEmptyNew[s2k.Batch]())
+						if nil != e {
+							b.Errorf("Unexpected error: %v", e)
+						}
+					}
+				})
+			})
+
+			b.Run("single batch", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sb(context.Background(), s2k.IterFromArray([]s2k.Batch{
+							s2k.BatchNew(tnames[0], []byte("k"), nil),
+						}))
+						if nil != e {
+							b.Errorf("Unexpected error: %v", e)
+						}
+					}
+				})
+			})
+
+			b.Run("multi batch", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						e := sb(context.Background(), s2k.IterFromArray([]s2k.Batch{
+							s2k.BatchNew(tnames[0], []byte("k"), nil),
+							s2k.BatchNew(tnames[1], []byte("k"), nil),
+							s2k.BatchNew(tnames[2], []byte("k"), nil),
+						}))
+						if nil != e {
+							b.Errorf("Unexpected error: %v", e)
+						}
+					}
+				})
+			})
+
+			b.Run("many", func(b *testing.B) {
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						buf8 := make([]byte, 8)
+						ib := s2k.IterFromArray(bmany)
+						mapd := s2k.IterMap(ib, func(b s2k.Batch) s2k.Batch {
+							i := uint64(time.Now().UnixNano())
+							binary.LittleEndian.PutUint64(buf8, i)
+							return b.WithKey(buf8)
+						})
+						e := sb(context.Background(), mapd)
+						if nil != e {
+							b.Errorf("Unexpected error: %v", e)
+						}
+					}
+				})
+				b.ReportMetric(
+					float64(b.N)*float64(len(bmany)),
+					"inserts",
+				)
+			})
 		})
 	})
 

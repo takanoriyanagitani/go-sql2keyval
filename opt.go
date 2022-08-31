@@ -21,3 +21,12 @@ func (o optionValue[T]) HasValue() bool     { return optionHasValue[T](o) }
 func OptionNew[T any](val T) optionValue[T] { return optionValue[T]{val} }
 
 func optionHasValue[T any](o Option[T]) bool { return !o.Empty() }
+
+func OptionMap[T, U any](o Option[T], f func(T) U) Option[U] {
+	if o.HasValue() {
+		t := o.Value()
+		u := f(t)
+		return OptionNew(u)
+	}
+	return OptionEmptyNew[U]()
+}

@@ -52,3 +52,29 @@ func IterFromChanNB[T any](c <-chan T) Iter[T] {
 		}
 	}
 }
+
+func IterMap[T, U any](i Iter[T], f func(T) U) Iter[U] {
+	return func() Option[U] {
+		oi := i()
+		return OptionMap(oi, f)
+	}
+}
+
+func (i Iter[T]) ToArray() (a []T) {
+	for o := i(); o.HasValue(); o = i() {
+		a = append(a, o.Value())
+	}
+	return a
+}
+
+func IterInts(lbi int, ube int) Iter[int] {
+	i := lbi
+	return func() Option[int] {
+		if i < ube {
+			o := OptionNew(i)
+			i += 1
+			return o
+		}
+		return OptionEmptyNew[int]()
+	}
+}
