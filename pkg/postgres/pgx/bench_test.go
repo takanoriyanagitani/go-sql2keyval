@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
-	"math/rand"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 

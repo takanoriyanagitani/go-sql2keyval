@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestAll(t *testing.T) {
+func TestIterAll(t *testing.T) {
 
 	t.Parallel()
 
@@ -131,6 +131,31 @@ func TestAll(t *testing.T) {
 		if o.HasValue() {
 			t.Errorf("Must be empty")
 		}
+	})
+
+	t.Run("iter", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("IterMap", func(t *testing.T) {
+			integers := IterInts(0, 3)
+			mapd := IterMap(integers, func(_ int) string {
+				return "7"
+			})
+			var sarr []string = mapd.ToArray()
+			if 3 != len(sarr) {
+				t.Errorf("Unexpected len: %v", len(sarr))
+			}
+
+			check := func(expected, got string) {
+				if expected != got {
+					t.Errorf("Unexpected value got.")
+				}
+			}
+
+			check(sarr[0], "7")
+			check(sarr[1], "7")
+			check(sarr[2], "7")
+		})
 	})
 
 }

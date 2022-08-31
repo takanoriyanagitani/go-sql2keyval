@@ -1,6 +1,7 @@
 package sql2keyval
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"testing"
@@ -166,7 +167,38 @@ func TestSql2KeyVal(t *testing.T) {
 					t.Errorf("Unexpected val got.")
 				}
 			})
+		})
 
+		t.Run("change key", func(t *testing.T) {
+			t.Parallel()
+
+			var b Batch = BatchNew("", nil, nil)
+
+			t.Run("bucket", func(t *testing.T) {
+				if "" != b.Bucket() {
+					t.Errorf("Unexpected value: %s", b.Bucket())
+				}
+			})
+
+			b2 := b.WithKey([]byte("hw"))
+
+			t.Run("key", func(t *testing.T) {
+				if nil != b.Pair().Key {
+					t.Errorf("Unexpected key got.")
+				}
+			})
+
+			t.Run("val", func(t *testing.T) {
+				if nil != b.Pair().Val {
+					t.Errorf("Unexpected val got.")
+				}
+			})
+
+			t.Run("new key", func(t *testing.T) {
+				if 0 != bytes.Compare([]byte("hw"), b2.Pair().Key) {
+					t.Errorf("Unexpected key got.")
+				}
+			})
 		})
 	})
 }
