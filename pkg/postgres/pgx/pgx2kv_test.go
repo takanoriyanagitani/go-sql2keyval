@@ -87,6 +87,61 @@ func TestAll(t *testing.T) {
 		})
 	})
 
+	t.Run("PgxBatchUpsertNew", func(t *testing.T) {
+		t.Parallel()
+		var sm s2k.SetBatch = PgxBatchUpsertNew(p)
+		var ab s2k.AddBucket = PgxAddBucketNew(p)
+
+		t.Run("empty", func(t *testing.T) {
+			t.Parallel()
+			e := sm(context.Background(), s2k.IterEmptyNew[s2k.Batch]())
+			if nil != e {
+				t.Errorf("Should be nop: %v", e)
+			}
+		})
+
+		t.Run("invalid table name", func(t *testing.T) {
+			t.Parallel()
+			e := sm(context.Background(), s2k.IterFromArray([]s2k.Batch{
+				s2k.BatchNew("0table", nil, nil),
+			}))
+			if nil == e {
+				t.Errorf("Must reject invalid table name")
+			}
+		})
+
+		// non parallel
+		t.Run("ordered", func(t *testing.T) {
+			tname := "test_batch_upsert"
+
+			tnames := []string{
+				tname + "_1",
+				tname + "_2",
+				tname + "_3",
+			}
+
+			t.Run("add buckets", func(t *testing.T) {
+				for _, tn := range tnames {
+					e := ab(context.Background(), tn)
+					if nil != e {
+						t.Errorf("Unable to create table: %v", e)
+					}
+				}
+			})
+
+			t.Run("upserts", func(t *testing.T) {
+				e := sm(context.Background(), s2k.IterFromArray([]s2k.Batch{
+					s2k.BatchNew(tname+"_1", []byte("k"), []byte("v")),
+					s2k.BatchNew(tname+"_2", []byte("k"), []byte("v")),
+					s2k.BatchNew(tname+"_3", []byte("k"), []byte("v")),
+				}))
+				if nil != e {
+					t.Errorf("Unable to upsert: %v", e)
+				}
+			})
+		})
+	})
+
 	t.Run("PgxAddBucketNew", func(t *testing.T) {
 		t.Parallel()
 		var ab s2k.AddBucket = PgxAddBucketNew(p)
