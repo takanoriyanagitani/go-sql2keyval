@@ -78,3 +78,23 @@ func IterInts(lbi int, ube int) Iter[int] {
 		return OptionEmptyNew[int]()
 	}
 }
+
+func IterFlat2Chan[T any](i Iter[Iter[T]], c chan<- T, lmt int) {
+	j := 0
+	for oi := i(); j < lmt && oi.HasValue(); oi = i() {
+		var si Iter[T] = oi.Value()
+		for o := si(); j < lmt && o.HasValue(); o = si() {
+			var t T = o.Value()
+			c <- t
+			j += 1
+		}
+	}
+}
+
+func IterInspect[T any](i Iter[T], f func(T)) Iter[T] {
+	return func() Option[T] {
+		var o Option[T] = i()
+		o.ForEach(f)
+		return o
+	}
+}
