@@ -4,6 +4,14 @@ import (
 	"testing"
 )
 
+func checker[T comparable](t *testing.T, got T, expected T) {
+	if got != expected {
+		t.Errorf("Unexpected value got.\n")
+		t.Errorf("expected: %v\n", expected)
+		t.Errorf("got: %v\n", got)
+	}
+}
+
 func TestIterAll(t *testing.T) {
 
 	t.Parallel()
@@ -155,6 +163,106 @@ func TestIterAll(t *testing.T) {
 			check(sarr[0], "7")
 			check(sarr[1], "7")
 			check(sarr[2], "7")
+		})
+	})
+
+	t.Run("IterFlatChan", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("empty", func(t *testing.T) {
+			t.Parallel()
+			ei := IterFromArray[Iter[int]](nil)
+			c := make(chan int, 128)
+			IterFlat2Chan(ei, c, 16)
+			ci := IterFromChanNB(c)
+			if ci().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+
+		t.Run("single empty iter", func(t *testing.T) {
+			t.Parallel()
+			ei := IterFromArray([]Iter[int]{})
+			c := make(chan int, 128)
+			IterFlat2Chan(ei, c, 16)
+			ci := IterFromChanNB(c)
+			if ci().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+
+		t.Run("single non empty iter", func(t *testing.T) {
+			t.Parallel()
+			ei := IterFromArray([]Iter[int]{
+				IterFromArray([]int{6, 3, 4}),
+			})
+			c := make(chan int, 128)
+			IterFlat2Chan(ei, c, 16)
+			ci := IterFromChanNB(c)
+
+			checker(t, 6, ci().Value())
+			checker(t, 3, ci().Value())
+			checker(t, 4, ci().Value())
+
+			if ci().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+
+		t.Run("multi non empty iter", func(t *testing.T) {
+			t.Parallel()
+			ei := IterFromArray([]Iter[int]{
+				IterFromArray([]int{6, 3, 4}),
+				IterFromArray([]int{3, 3, 3}),
+			})
+			c := make(chan int, 128)
+			IterFlat2Chan(ei, c, 16)
+			ci := IterFromChanNB(c)
+
+			checker(t, 6, ci().Value())
+			checker(t, 3, ci().Value())
+			checker(t, 4, ci().Value())
+			checker(t, 3, ci().Value())
+			checker(t, 3, ci().Value())
+			checker(t, 3, ci().Value())
+
+			if ci().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+
+		t.Run("too many items", func(t *testing.T) {
+			t.Parallel()
+			ei := IterFromArray([]Iter[int]{
+				IterFromArray([]int{6, 3, 4}),
+				IterFromArray([]int{3, 3, 3}),
+			})
+			c := make(chan int, 128)
+			IterFlat2Chan(ei, c, 3)
+			ci := IterFromChanNB(c)
+
+			checker(t, 6, ci().Value())
+			checker(t, 3, ci().Value())
+			checker(t, 4, ci().Value())
+
+			if ci().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+	})
+
+	t.Run("Inspect", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("empty", func(t *testing.T) {
+			ei := IterFromArray[int](nil)
+			ins := ei.IntoInspect(func(_ int) {
+				t.Errorf("Do not run")
+			})
+
+			if 0 != ins.Count() {
+				t.Errorf("Must be empty")
+			}
 		})
 	})
 

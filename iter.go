@@ -91,10 +91,18 @@ func IterFlat2Chan[T any](i Iter[Iter[T]], c chan<- T, lmt int) {
 	}
 }
 
-func IterInspect[T any](i Iter[T], f func(T)) Iter[T] {
+func (i Iter[T]) IntoInspect(f func(T)) Iter[T] {
 	return func() Option[T] {
 		var o Option[T] = i()
 		o.ForEach(f)
 		return o
 	}
+}
+
+func (i Iter[T]) Count() uint64 {
+	var u uint64 = 0
+	for o := i(); o.HasValue(); o = i() {
+		u += 1
+	}
+	return u
 }
