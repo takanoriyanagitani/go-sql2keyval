@@ -245,7 +245,7 @@ func TestIterAll(t *testing.T) {
 			checker(t, 3, ci().Value())
 			checker(t, 4, ci().Value())
 
-			if ci().HasValue() {
+			if !ci().Empty() {
 				t.Errorf("Must be empty")
 			}
 		})
@@ -263,6 +263,20 @@ func TestIterAll(t *testing.T) {
 			if 0 != ins.Count() {
 				t.Errorf("Must be empty")
 			}
+		})
+
+		t.Run("non empty", func(t *testing.T) {
+			ei := IterFromArray[int]([]int{3, 7, 7, 6})
+			var sum int = 0
+			ins := ei.IntoInspect(func(i int) {
+				sum += i
+			})
+
+			if 4 != ins.Count() {
+				t.Errorf("Must be empty")
+			}
+
+			checker(t, 23, sum)
 		})
 	})
 
