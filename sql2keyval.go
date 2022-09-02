@@ -14,6 +14,7 @@ type DelBucket func(ctx context.Context, bucket string) error
 type AddBucket func(ctx context.Context, bucket string) error
 
 type AddLog func(ctx context.Context, bucket string) error
+type InsLog func(ctx context.Context, lg []byte) error
 
 type Pair struct {
 	Key []byte
