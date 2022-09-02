@@ -1,6 +1,7 @@
 package pgx2kv
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"testing"
@@ -9,6 +10,20 @@ import (
 
 	s2k "github.com/takanoriyanagitani/go-sql2keyval"
 )
+
+func checkBuilder[T any](comp func(a, b T) bool) func(t *testing.T, got, expected T) {
+	return func(t *testing.T, got, expected T) {
+		if !comp(got, expected) {
+			t.Errorf("Unexpected value got.\n")
+			t.Errorf("expected: %v\n", expected)
+			t.Errorf("got:      %v\n", got)
+		}
+	}
+}
+
+var checkBytes = checkBuilder(func(a, b []byte) bool {
+	return 0 == bytes.Compare(a, b)
+})
 
 func TestAll(t *testing.T) {
 	t.Parallel()
@@ -413,6 +428,73 @@ func TestAll(t *testing.T) {
 			if 1 != cnt {
 				t.Errorf("Unexpected table count: %v", cnt)
 			}
+		})
+	})
+
+	t.Run("PgxLogInsBuilder", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("invalid table name", func(t *testing.T) {
+			t.Parallel()
+			var liBuilder func(p *pgxpool.Pool) s2k.InsLog = PgxLogInsBuilder("0test")
+			var insLog s2k.InsLog = liBuilder(p)
+			e := insLog(context.Background(), []byte(""))
+			if nil == e {
+				t.Errorf("Must reject invalid table")
+			}
+		})
+
+		t.Run("valid table name", func(t *testing.T) {
+			t.Parallel()
+
+			lname := "vlog0"
+
+			var adder s2k.AddLog = PgxAddLogNew(p)
+			var liBuilder func(p *pgxpool.Pool) s2k.InsLog = PgxLogInsBuilder(lname)
+			var insLog s2k.InsLog = liBuilder(p)
+
+			e := adder(context.Background(), lname)
+			if nil != e {
+				t.Errorf("Unable to create test table: %v", e)
+			}
+
+			t.Run("empty", func(t *testing.T) {
+				t.Parallel()
+
+				e := insLog(context.Background(), nil)
+				if nil != e {
+					t.Errorf("Must skip invalid log: %v", e)
+				}
+			})
+
+			t.Run("single log", func(t *testing.T) {
+				t.Parallel()
+
+				lg := []byte(`
+					{"type":"upsert", "bucket":"b0", "key":"k", "val": "v"}
+					{"type":"upsert", "bucket":"b0", "key":"k", "val": "w"}
+				`)
+
+				e := insLog(context.Background(), lg)
+				if nil != e {
+					t.Errorf("Must skip invalid log: %v", e)
+				}
+
+				row := p.QueryRow(context.Background(), `
+					SELECT lg FROM vlog0
+					ORDER BY id DESC
+					LIMIT 1
+				`)
+
+				var got []byte
+				e = row.Scan(&got)
+
+				if nil != e {
+					t.Errorf("Unexpected error: %v", e)
+				}
+
+				checkBytes(t, lg, got)
+			})
 		})
 	})
 
