@@ -13,6 +13,8 @@ type Lst func(ctx context.Context, bucket string, cb func(key []byte) error) err
 type DelBucket func(ctx context.Context, bucket string) error
 type AddBucket func(ctx context.Context, bucket string) error
 
+type AddLog func(ctx context.Context, bucket string) error
+
 type Pair struct {
 	Key []byte
 	Val []byte

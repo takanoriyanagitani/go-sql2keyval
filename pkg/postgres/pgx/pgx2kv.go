@@ -99,6 +99,19 @@ func pgxBucketAddNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.AddBucket {
 	}
 }
 
+func pgxLogAddNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.AddLog {
+	return func(p *pgxpool.Pool) s2k.AddLog {
+		return func(ctx context.Context, bucket string) error {
+			q, e := qgen(bucket)
+			if nil != e {
+				return e
+			}
+			_, e = p.Exec(ctx, q)
+			return e
+		}
+	}
+}
+
 func pgxBucketDelNew(qgen QueryGenerator) func(p *pgxpool.Pool) s2k.DelBucket {
 	return func(p *pgxpool.Pool) s2k.DelBucket {
 		return func(ctx context.Context, bucket string) error {
@@ -293,6 +306,17 @@ var pgBulkAddQueryGenerator QueryGenerator = queryGeneratorNew(
 	`),
 )
 
+var pgAddLogQueryGenerator QueryGenerator = queryGeneratorNew(
+	pgTableValidator,
+	strQueryGeneratorNewMust(`
+		CREATE TABLE IF NOT EXISTS {{.tableName}} (
+			id BIGSERIAL,
+			lg BYTEA,
+			CONSTRAINT {{.tableName}}_pkc PRIMARY KEY(id)
+		)
+	`),
+)
+
 var pgBulkDelQueryGenerator QueryGenerator = queryGeneratorNew(
 	pgTableValidator,
 	strQueryGeneratorNewMust(`
@@ -303,6 +327,7 @@ var pgBulkDelQueryGenerator QueryGenerator = queryGeneratorNew(
 var PgxBulkSetNew func(p *pgxpool.Pool) s2k.SetMany = pgxBulkSetNew(pgSetQueryGenerator)
 var PgxAddBucketNew func(p *pgxpool.Pool) s2k.AddBucket = pgxBucketAddNew(pgBulkAddQueryGenerator)
 var PgxDelBucketNew func(p *pgxpool.Pool) s2k.DelBucket = pgxBucketDelNew(pgBulkDelQueryGenerator)
+var PgxAddLogNew func(p *pgxpool.Pool) s2k.AddLog = pgxLogAddNew(pgAddLogQueryGenerator)
 
 var PgxBatchUpsertNew func(p *pgxpool.Pool) s2k.SetBatch = pgxBatchUpsertNew(pgBufSetQueryGenerator)
 
