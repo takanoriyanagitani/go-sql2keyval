@@ -381,6 +381,41 @@ func TestAll(t *testing.T) {
 		})
 	})
 
+	t.Run("PgxAddLogNew", func(t *testing.T) {
+		t.Parallel()
+
+		var adder s2k.AddLog = PgxAddLogNew(p)
+
+		t.Run("invalid table name", func(t *testing.T) {
+			t.Parallel()
+
+			e := adder(context.Background(), "0tlog")
+			if nil == e {
+				t.Errorf("Must reject invalid table name")
+			}
+		})
+
+		t.Run("valid table name", func(t *testing.T) {
+			t.Parallel()
+
+			e := adder(context.Background(), "vlog0")
+			if nil != e {
+				t.Errorf("Unable to create vlog: %v", e)
+			}
+			row := p.QueryRow(context.Background(), `
+				SELECT COUNT(*) AS cnt FROM pg_class
+				WHERE
+				  relname = $1::TEXT
+				AND relkind = 'r'
+			`, "vlog0")
+			var cnt int64
+			e = row.Scan(&cnt)
+			if 1 != cnt {
+				t.Errorf("Unexpected table count: %v", cnt)
+			}
+		})
+	})
+
 	t.Cleanup(func() {
 		p.Close()
 	})
