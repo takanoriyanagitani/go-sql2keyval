@@ -14,7 +14,7 @@ import (
 	s2k "github.com/takanoriyanagitani/go-sql2keyval"
 )
 
-func BenchmarkSetMany(b *testing.B) {
+func BenchmarkPgxKv(b *testing.B) {
 	pgx_dbname := os.Getenv("ITEST_SQL2KEYVAL_PGX_DBNAME")
 	if len(pgx_dbname) < 1 {
 		b.Skip("skipping pgx test...")
@@ -287,18 +287,23 @@ func BenchmarkSetMany(b *testing.B) {
 
 			b.Run("multi batch", func(b *testing.B) {
 				b.ResetTimer()
+				arr := []s2k.Batch{
+					s2k.BatchNew(tnames[0], []byte("k"), nil),
+					s2k.BatchNew(tnames[1], []byte("k"), nil),
+					s2k.BatchNew(tnames[2], []byte("k"), nil),
+				}
 				b.RunParallel(func(pb *testing.PB) {
 					for pb.Next() {
-						e := sb(context.Background(), s2k.IterFromArray([]s2k.Batch{
-							s2k.BatchNew(tnames[0], []byte("k"), nil),
-							s2k.BatchNew(tnames[1], []byte("k"), nil),
-							s2k.BatchNew(tnames[2], []byte("k"), nil),
-						}))
+						e := sb(context.Background(), s2k.IterFromArray(arr))
 						if nil != e {
 							b.Errorf("Unexpected error: %v", e)
 						}
 					}
 				})
+				b.ReportMetric(
+					float64(b.N)*float64(len(arr)),
+					"inserts",
+				)
 			})
 
 			b.Run("many", func(b *testing.B) {
