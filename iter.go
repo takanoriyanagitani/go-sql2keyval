@@ -106,3 +106,14 @@ func (i Iter[T]) Count() uint64 {
 	}
 	return u
 }
+
+func (iter Iter[T]) Take(imax int) Iter[T] {
+	i := 0
+	return func() Option[T] {
+		return iter().Filter(func(_ T) bool {
+			ok := i < imax
+			i += 1
+			return ok
+		})
+	}
+}

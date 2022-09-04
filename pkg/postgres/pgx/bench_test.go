@@ -328,6 +328,42 @@ func BenchmarkPgxKv(b *testing.B) {
 					"inserts",
 				)
 			})
+
+			b.Run("periodic", func(b *testing.B) {
+				pn := 128
+				b.SetParallelism(pn)
+				tsingle := "pgx_benchall_many_periodic"
+				bsingle := []s2k.Batch{s2k.BatchNew(
+					tsingle,
+					nil,
+					nil,
+				)}
+				e := ab(context.Background(), tsingle)
+				if nil != e {
+					b.Errorf("Unable to create bench table: %v", e)
+				}
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						buf8 := make([]byte, 8)
+						var ib s2k.Iter[s2k.Batch] = s2k.IterFromArray(bsingle).Take(1)
+						var mapd s2k.Iter[s2k.Batch] = s2k.IterMap(ib, func(b s2k.Batch) s2k.Batch {
+							i := uint64(time.Now().UnixNano())
+							binary.LittleEndian.PutUint64(buf8, i)
+							return b.WithKey(buf8)
+						})
+						e := sb(context.Background(), mapd)
+						if nil != e {
+							b.Errorf("Unexpected error: %v", e)
+						}
+						time.Sleep(1 * time.Second)
+					}
+				})
+				b.ReportMetric(
+					float64(b.N),
+					"inserts",
+				)
+			})
 		})
 	})
 

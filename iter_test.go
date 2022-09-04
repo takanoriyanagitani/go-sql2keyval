@@ -280,4 +280,29 @@ func TestIterAll(t *testing.T) {
 		})
 	})
 
+	t.Run("Take", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("empty", func(t *testing.T) {
+			var i Iter[int] = IterEmptyNew[int]()
+			var k Iter[int] = i.Take(128)
+			if k().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+
+		t.Run("single", func(t *testing.T) {
+			var i Iter[int] = IterFromArray([]int{
+				6, 3, 4,
+			})
+			var k Iter[int] = i.Take(1)
+			var o Option[int] = k()
+			checker(t, o.Value(), 6)
+
+			if k().HasValue() {
+				t.Errorf("Must be empty")
+			}
+		})
+	})
+
 }
