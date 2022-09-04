@@ -398,6 +398,7 @@ func TestAll(t *testing.T) {
 
 	t.Run("PgxAddLogNew", func(t *testing.T) {
 		t.Parallel()
+		lname := "vlog0"
 
 		var adder s2k.AddLog = PgxAddLogNew(p)
 
@@ -413,7 +414,7 @@ func TestAll(t *testing.T) {
 		t.Run("valid table name", func(t *testing.T) {
 			t.Parallel()
 
-			e := adder(context.Background(), "vlog0")
+			e := adder(context.Background(), lname)
 			if nil != e {
 				t.Errorf("Unable to create vlog: %v", e)
 			}
@@ -422,7 +423,7 @@ func TestAll(t *testing.T) {
 				WHERE
 				  relname = $1::TEXT
 				AND relkind = 'r'
-			`, "vlog0")
+			`, lname)
 			var cnt int64
 			e = row.Scan(&cnt)
 			if 1 != cnt {
@@ -447,7 +448,7 @@ func TestAll(t *testing.T) {
 		t.Run("valid table name", func(t *testing.T) {
 			t.Parallel()
 
-			lname := "vlog0"
+			lname := "vlog1"
 
 			var adder s2k.AddLog = PgxAddLogNew(p)
 			var liBuilder func(p *pgxpool.Pool) s2k.InsLog = PgxLogInsBuilder(lname)
@@ -481,7 +482,7 @@ func TestAll(t *testing.T) {
 				}
 
 				row := p.QueryRow(context.Background(), `
-					SELECT lg FROM vlog0
+					SELECT lg FROM `+lname+`
 					ORDER BY id DESC
 					LIMIT 1
 				`)
