@@ -117,3 +117,11 @@ func (iter Iter[T]) Take(imax int) Iter[T] {
 		})
 	}
 }
+
+func IterReduce[T, U any](i Iter[T], init U, reducer func(state U, item T) U) U {
+	state := init
+	for o := i(); o.HasValue(); o = i() {
+		state = reducer(state, o.Value())
+	}
+	return state
+}

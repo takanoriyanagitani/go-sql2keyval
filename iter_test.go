@@ -305,4 +305,28 @@ func TestIterAll(t *testing.T) {
 		})
 	})
 
+	t.Run("IterReduce", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("empty", func(t *testing.T) {
+			var i Iter[int] = IterEmptyNew[int]()
+			var sum int = IterReduce(i, 42, func(state, item int) int { return state + item })
+			checker(t, sum, 42)
+		})
+
+		t.Run("count odd", func(t *testing.T) {
+			var i Iter[uint8] = IterFromArray([]uint8{
+				0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+			})
+			var cnt uint64 = IterReduce(i, 0, func(tot uint64, item uint8) uint64 {
+				m := item & 0x01
+				if 0 < m {
+					return 1 + tot
+				}
+				return tot
+			})
+			checker(t, cnt, 5)
+		})
+	})
+
 }
