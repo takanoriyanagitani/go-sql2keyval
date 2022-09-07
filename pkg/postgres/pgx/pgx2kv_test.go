@@ -426,6 +426,10 @@ func TestAll(t *testing.T) {
 			`, lname)
 			var cnt int64
 			e = row.Scan(&cnt)
+			if nil != e {
+				t.Errorf("Unable to get count: %v", e)
+			}
+
 			if 1 != cnt {
 				t.Errorf("Unexpected table count: %v", cnt)
 			}
